@@ -4,12 +4,13 @@ import React, { useEffect } from "react";
 import { Entity } from "./features/domain/types";
 import FlowChart from "./features/FlowChart";
 import SidePanel from "./features/SidePanel";
+import Persister from "./features/Persister";
+import Tabs from "./features/Tabs";
 
 function App() {
-  const [entities, setEntities] = React.useState(
-    (localStorage.entities && JSON.parse(localStorage.entities)) || {}
-  );
+  const [entities, setEntities] = React.useState<Record<string, Entity>>({});
   const [selectedEntities, setSelectedEntities] = React.useState<Entity[]>([]);
+  const [tab, setTab] = React.useState<null | string>(null);
 
   const addEntity = React.useCallback(
     (entity: Entity) => {
@@ -23,19 +24,40 @@ function App() {
   );
 
   useEffect(() => {
-    localStorage.entities = JSON.stringify(entities);
+    Persister.save("entities", entities);
   }, [entities]);
+
+  useEffect(() => {
+    (async () => {
+      Persister.setTab(tab);
+      // entities
+      const entities = await Persister.load<Record<string, Entity>>("entities");
+
+      if (entities) setEntities(entities);
+      else {
+        // migration
+        const entities = await Persister.load<Record<string, Entity>>(
+          "entities",
+          true
+        );
+        if (entities) setEntities(entities);
+      }
+    })();
+  }, [tab]);
+
+  console.log(entities);
 
   return (
     <div className="app" style={{ width: "100vw", height: "100vh" }}>
       <header style={{ height: "50px", backgroundColor: "grey" }}>
         <button
           onClick={() => {
-            delete localStorage.entities;
+            Persister.remove("entities");
           }}
         >
           Clear
         </button>
+        <Tabs onTabChange={setTab} />
       </header>
 
       <div

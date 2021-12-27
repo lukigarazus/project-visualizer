@@ -27,9 +27,12 @@ const mapAndPush = <T extends BaseEntity>(
 
 export const mapEntityToElements = (
   entity: Entity,
-  edgesOnly = false
+  positions?: Record<string, { x: number; y: number }> | null
 ): Elements => {
-  const parsedPositions = JSON.parse(localStorage.getItem("positions") || "{}");
+  const edgesOnly = !!positions;
+  const parsedPositions = positions || {};
+  console.log(positions);
+
   const base = {
     id: entity.name,
     data: { label: entity.name, entity },
