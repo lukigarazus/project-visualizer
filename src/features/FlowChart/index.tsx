@@ -11,6 +11,11 @@ import Persister from "../Persister";
 import "react-flow-renderer/dist/style.css";
 import "react-flow-renderer/dist/theme-default.css";
 
+enum FlowChartState {
+  WAITING_FOR_POSITIONS,
+  READY,
+}
+
 const FlowChart = ({
   entities,
   setEntities,
@@ -20,9 +25,15 @@ const FlowChart = ({
   setEntities: (entities: Record<string, Entity>) => void;
   setSelectedEntities: (entities: Entity[]) => void;
 }) => {
+  const [flowChartState, setFlowChartState] = React.useState<FlowChartState>(
+    FlowChartState.WAITING_FOR_POSITIONS
+  );
+
   const [mappedEntities, setMappedEntities] = React.useState<Elements>([]);
+
   const setMappedEntitiesWrapped = React.useCallback(
     (elements: Elements) => {
+      setMappedEntities(elements);
       setEntities(
         elements
           .map((el) => el.data?.entity)
@@ -32,9 +43,8 @@ const FlowChart = ({
             return acc;
           }, {} as Record<string, Entity>)
       );
-      setMappedEntities(elements);
     },
-    [setMappedEntities, setEntities]
+    [setEntities]
   );
   const onSelectionChangeWrapped = React.useCallback(
     (nodes) => {
@@ -55,16 +65,17 @@ const FlowChart = ({
   );
 
   useEffect(() => {
-    // save to local storage - start
-    (async () => {
-      let parsedPositions = {} as Record<string, { x: number; y: number }>;
-      for (const node of mappedEntities) {
-        if ("position" in node) {
-          parsedPositions[node.data?.entity.name as string] = node.position;
+    if (flowChartState === FlowChartState.READY)
+      // save to local storage - start
+      (async () => {
+        let parsedPositions = {} as Record<string, { x: number; y: number }>;
+        for (const node of mappedEntities) {
+          if ("position" in node) {
+            parsedPositions[node.data?.entity.name as string] = node.position;
+          }
         }
-      }
-      Persister.save("positions", parsedPositions);
-    })();
+        Persister.save("positions", parsedPositions);
+      })();
     // save to local storage - end
   }, [mappedEntities]);
   useEffect(() => {
@@ -81,13 +92,16 @@ const FlowChart = ({
         );
         if (mappedEntity) {
           newMappedEntities.push(mappedEntity);
-          newMappedEntities.push(...mapEntityToElements(value, positions));
+          newMappedEntities.push(
+            ...mapEntityToElements(value, positions, true)
+          );
         } else {
-          newMappedEntities.push(...mapEntityToElements(value));
+          newMappedEntities.push(...mapEntityToElements(value, positions));
         }
       }
 
-      setMappedEntities([...newMappedEntities]);
+      setFlowChartState(FlowChartState.READY);
+      setMappedEntities(newMappedEntities);
     })();
   }, [entities]);
 

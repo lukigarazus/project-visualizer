@@ -27,11 +27,10 @@ const mapAndPush = <T extends BaseEntity>(
 
 export const mapEntityToElements = (
   entity: Entity,
-  positions?: Record<string, { x: number; y: number }> | null
+  positions: Record<string, { x: number; y: number }> | null,
+  edgesOnly = false
 ): Elements => {
-  const edgesOnly = !!positions;
   const parsedPositions = positions || {};
-  console.log(positions);
 
   const base = {
     id: entity.name,

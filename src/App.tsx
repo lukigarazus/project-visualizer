@@ -7,7 +7,17 @@ import SidePanel from "./features/SidePanel";
 import Persister from "./features/Persister";
 import Tabs from "./features/Tabs";
 
+enum AppState {
+  WAITING_FOR_TAB,
+  WAITING_FOR_ENTITIES,
+  READY,
+}
+
 function App() {
+  const [appState, setAppState] = React.useState<AppState>(
+    AppState.WAITING_FOR_TAB
+  );
+
   const [entities, setEntities] = React.useState<Record<string, Entity>>({});
   const [selectedEntities, setSelectedEntities] = React.useState<Entity[]>([]);
   const [tab, setTab] = React.useState<null | string>(null);
@@ -22,30 +32,41 @@ function App() {
     },
     [entities]
   );
+  const onTabChange = React.useCallback((tab) => {
+    setTab(tab);
+    Persister.setTab(tab);
+    setAppState(AppState.WAITING_FOR_ENTITIES);
+  }, []);
 
   useEffect(() => {
-    Persister.save("entities", entities);
+    if (appState === AppState.READY) Persister.save("entities", entities);
   }, [entities]);
 
   useEffect(() => {
-    (async () => {
-      Persister.setTab(tab);
-      // entities
-      const entities = await Persister.load<Record<string, Entity>>("entities");
-
-      if (entities) setEntities(entities);
-      else {
-        // migration
+    if (appState === AppState.WAITING_FOR_ENTITIES)
+      (async () => {
+        // entities
         const entities = await Persister.load<Record<string, Entity>>(
-          "entities",
-          true
+          "entities"
         );
-        if (entities) setEntities(entities);
-      }
-    })();
-  }, [tab]);
 
-  console.log(entities);
+        if (entities) {
+          setEntities(entities);
+        } else {
+          // migration
+          const entities = await Persister.load<Record<string, Entity>>(
+            "entities",
+            true
+          );
+          if (entities) {
+            setEntities(entities);
+          } else {
+            setEntities({});
+          }
+        }
+        setAppState(AppState.READY);
+      })();
+  }, [appState]);
 
   return (
     <div className="app" style={{ width: "100vw", height: "100vh" }}>
@@ -57,7 +78,7 @@ function App() {
         >
           Clear
         </button>
-        <Tabs onTabChange={setTab} />
+        <Tabs onTabChange={onTabChange} />
       </header>
 
       <div
@@ -68,11 +89,16 @@ function App() {
           gridTemplateColumns: "auto 300px",
         }}
       >
-        <FlowChart
-          entities={entities}
-          setEntities={setEntities}
-          setSelectedEntities={setSelectedEntities}
-        />
+        {appState === AppState.READY ? (
+          <FlowChart
+            entities={entities}
+            setEntities={setEntities}
+            setSelectedEntities={setSelectedEntities}
+          />
+        ) : (
+          <div>Loading...</div>
+        )}
+
         <SidePanel
           entities={entities}
           selectedEntities={selectedEntities}

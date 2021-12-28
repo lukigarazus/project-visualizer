@@ -169,8 +169,7 @@ export const onNodeDragStop =
     );
     if (element && "position" in element) {
       element.position = {
-        x: position.x,
-        y: position.y,
+        ...position,
       };
     }
 
