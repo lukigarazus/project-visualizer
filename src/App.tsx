@@ -20,7 +20,6 @@ function App() {
 
   const [entities, setEntities] = React.useState<Record<string, Entity>>({});
   const [selectedEntities, setSelectedEntities] = React.useState<Entity[]>([]);
-  const [tab, setTab] = React.useState<null | string>(null);
 
   const addEntity = React.useCallback(
     (entity: Entity) => {
@@ -33,7 +32,6 @@ function App() {
     [entities]
   );
   const onTabChange = React.useCallback((tab) => {
-    setTab(tab);
     Persister.setTab(tab);
     setAppState(AppState.WAITING_FOR_ENTITIES);
   }, []);
@@ -103,6 +101,17 @@ function App() {
           entities={entities}
           selectedEntities={selectedEntities}
           addEntity={addEntity}
+          editEntity={(entity) => {
+            console.log("editEntity", entity);
+            setEntities({ ...entities, [entity.name]: { ...entity } });
+          }}
+          removeEntity={(entity) => {
+            delete entities[entity.name];
+            setEntities({ ...entities });
+            if (selectedEntities.includes(entity)) {
+              setSelectedEntities(selectedEntities.filter((e) => e !== entity));
+            }
+          }}
         />
       </div>
     </div>

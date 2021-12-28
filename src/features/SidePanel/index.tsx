@@ -8,10 +8,14 @@ const SidePanel = ({
   entities,
   selectedEntities,
   addEntity,
+  editEntity,
+  removeEntity,
 }: {
   entities: Record<string, Entity>;
   selectedEntities: Entity[];
   addEntity: (entity: Entity) => void;
+  removeEntity: (entity: Entity) => void;
+  editEntity: (entity: Entity) => void;
 }) => {
   return (
     <div
@@ -22,7 +26,11 @@ const SidePanel = ({
       }}
     >
       <AddEntity onEntityAdd={addEntity} />
-      <SelectedEntities selectedEntities={selectedEntities} />
+      <SelectedEntities
+        editEntity={editEntity}
+        removeEntity={removeEntity}
+        selectedEntities={selectedEntities}
+      />
     </div>
   );
 };

@@ -59,10 +59,10 @@ const FlowChart = ({
     onNodeDragStop(mappedEntities, setMappedEntitiesWrapped),
     [mappedEntities, setMappedEntitiesWrapped]
   );
-  const onConnectPA = React.useCallback(
-    onConnect(mappedEntities, setMappedEntitiesWrapped, setEntities),
-    [mappedEntities, setMappedEntitiesWrapped]
-  );
+  const onConnectPA = React.useCallback(onConnect(entities, setEntities), [
+    entities,
+    setEntities,
+  ]);
 
   useEffect(() => {
     if (flowChartState === FlowChartState.READY)
@@ -83,6 +83,7 @@ const FlowChart = ({
       const positions = await Persister.load<
         Record<string, { x: number; y: number }>
       >("positions");
+      console.log("NEW ENTITIES", entities);
 
       const newMappedEntities = [] as any;
 

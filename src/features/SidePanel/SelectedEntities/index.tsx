@@ -1,12 +1,16 @@
 import React from "react";
 
 import { Entity } from "../../domain/types";
-import typeComponentFactory from "./typeComponentFactory";
+import typeComponentFactory from "../typeComponents/typeComponentFactory";
 
 const SelectedEntities = ({
   selectedEntities,
+  editEntity,
+  removeEntity,
 }: {
   selectedEntities: Entity[];
+  editEntity: (entity: Entity) => void;
+  removeEntity: (entity: Entity) => void;
 }) => {
   return (
     <div>
@@ -15,7 +19,12 @@ const SelectedEntities = ({
         {selectedEntities.map((selectedEntity) => {
           const Component = typeComponentFactory(selectedEntity);
           return (
-            <Component key={selectedEntity.name} entity={selectedEntity} />
+            <Component
+              key={selectedEntity.name}
+              entity={selectedEntity}
+              editEntity={editEntity}
+              removeEntity={removeEntity}
+            />
           );
         })}
       </div>
