@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { GlobalHotKeys, KeyMap } from "react-hotkeys";
 // import { ToastContainer, toast } from 'react-toastify';
 
 import { Entity } from "./features/domain/types";
@@ -12,6 +13,11 @@ enum AppState {
   WAITING_FOR_ENTITIES,
   READY,
 }
+
+const KEY_MAP: KeyMap = {
+  "save-flowchart": "s",
+  "remove-entity": "del",
+};
 
 function App() {
   const [appState, setAppState] = React.useState<AppState>(
@@ -31,10 +37,30 @@ function App() {
     },
     [entities]
   );
+  const removeEntity = React.useCallback(
+    (entity) => {
+      delete entities[entity.name];
+      setEntities({ ...entities });
+      if (selectedEntities.includes(entity)) {
+        setSelectedEntities(selectedEntities.filter((e) => e !== entity));
+      }
+    },
+    [entities, selectedEntities]
+  );
   const onTabChange = React.useCallback((tab) => {
     Persister.setTab(tab);
     setAppState(AppState.WAITING_FOR_ENTITIES);
   }, []);
+
+  const KEY_HANDLERS = React.useMemo(() => {
+    return {
+      "remove-entity": () => {
+        if (selectedEntities.length === 1) {
+          removeEntity(selectedEntities[0]);
+        }
+      },
+    };
+  }, [removeEntity, selectedEntities]);
 
   useEffect(() => {
     if (appState === AppState.READY) Persister.save("entities", entities);
@@ -67,54 +93,50 @@ function App() {
   }, [appState]);
 
   return (
-    <div className="app" style={{ width: "100vw", height: "100vh" }}>
-      <header style={{ height: "50px", backgroundColor: "grey" }}>
-        <button
-          onClick={() => {
-            Persister.remove("entities");
+    <GlobalHotKeys keyMap={KEY_MAP} handlers={KEY_HANDLERS} allowChanges>
+      <div className="app" style={{ width: "100vw", height: "100vh" }}>
+        <header style={{ height: "50px", backgroundColor: "grey" }}>
+          <button
+            onClick={() => {
+              Persister.remove("entities");
+            }}
+          >
+            Clear
+          </button>
+          <Tabs onTabChange={onTabChange} />
+        </header>
+
+        <div
+          style={{
+            width: "100%",
+            height: "calc(100% - 50px)",
+            display: "grid",
+            gridTemplateColumns: "auto 300px",
           }}
         >
-          Clear
-        </button>
-        <Tabs onTabChange={onTabChange} />
-      </header>
+          {appState === AppState.READY ? (
+            <FlowChart
+              entities={entities}
+              setEntities={setEntities}
+              setSelectedEntities={setSelectedEntities}
+            />
+          ) : (
+            <div>Loading...</div>
+          )}
 
-      <div
-        style={{
-          width: "100%",
-          height: "calc(100% - 50px)",
-          display: "grid",
-          gridTemplateColumns: "auto 300px",
-        }}
-      >
-        {appState === AppState.READY ? (
-          <FlowChart
+          <SidePanel
             entities={entities}
-            setEntities={setEntities}
-            setSelectedEntities={setSelectedEntities}
+            selectedEntities={selectedEntities}
+            addEntity={addEntity}
+            editEntity={(entity) => {
+              console.log("editEntity", entity);
+              setEntities({ ...entities, [entity.name]: { ...entity } });
+            }}
+            removeEntity={removeEntity}
           />
-        ) : (
-          <div>Loading...</div>
-        )}
-
-        <SidePanel
-          entities={entities}
-          selectedEntities={selectedEntities}
-          addEntity={addEntity}
-          editEntity={(entity) => {
-            console.log("editEntity", entity);
-            setEntities({ ...entities, [entity.name]: { ...entity } });
-          }}
-          removeEntity={(entity) => {
-            delete entities[entity.name];
-            setEntities({ ...entities });
-            if (selectedEntities.includes(entity)) {
-              setSelectedEntities(selectedEntities.filter((e) => e !== entity));
-            }
-          }}
-        />
+        </div>
       </div>
-    </div>
+    </GlobalHotKeys>
   );
 }
 
