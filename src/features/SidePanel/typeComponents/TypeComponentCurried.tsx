@@ -26,6 +26,7 @@ const TypeComponentCurried =
           onRemove={() => {
             removeEntity(entity);
           }}
+          editable={true}
         />
         <div style={{ padding: "10px" }}>
           {parentKeys.map((key) => (

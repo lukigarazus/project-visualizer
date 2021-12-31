@@ -1,22 +1,9 @@
 import React from "react";
 
-import { Entity } from "../domain/types";
 import SelectedEntities from "./SelectedEntities";
 import AddEntity from "./AddEntity";
 
-const SidePanel = ({
-  entities,
-  selectedEntities,
-  addEntity,
-  editEntity,
-  removeEntity,
-}: {
-  entities: Record<string, Entity>;
-  selectedEntities: Entity[];
-  addEntity: (entity: Entity) => void;
-  removeEntity: (entity: Entity) => void;
-  editEntity: (entity: Entity) => void;
-}) => {
+const SidePanel = () => {
   return (
     <div
       style={{
@@ -25,12 +12,8 @@ const SidePanel = ({
         padding: "10px",
       }}
     >
-      <AddEntity onEntityAdd={addEntity} />
-      <SelectedEntities
-        editEntity={editEntity}
-        removeEntity={removeEntity}
-        selectedEntities={selectedEntities}
-      />
+      <AddEntity />
+      <SelectedEntities />
     </div>
   );
 };

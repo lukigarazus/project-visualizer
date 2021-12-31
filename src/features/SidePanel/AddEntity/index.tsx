@@ -2,6 +2,7 @@ import React from "react";
 
 import { ALL_TYPES, Entity } from "../../domain/types";
 import { entityFactory } from "../../domain/classes";
+import EntitiesContext from "../../EntitiesContext";
 
 const AddEntity = ({
   onEntityAdd,

@@ -7,6 +7,7 @@ import FlowChart from "./features/FlowChart";
 import SidePanel from "./features/SidePanel";
 import Persister from "./features/Persister";
 import Tabs from "./features/Tabs";
+import EntitiesContext from "./features/EntitiesContext";
 
 enum AppState {
   WAITING_FOR_TAB,
@@ -14,9 +15,13 @@ enum AppState {
   READY,
 }
 
+enum Action {
+  ADD_ENTITY,
+  REMOVE_ENTITY,
+}
+
 const KEY_MAP: KeyMap = {
-  "save-flowchart": "s",
-  "remove-entity": "del",
+  [Action.REMOVE_ENTITY]: "del",
 };
 
 function App() {
@@ -47,6 +52,12 @@ function App() {
     },
     [entities, selectedEntities]
   );
+  const editEntity = React.useCallback((entity) => {
+    setEntities((prev) => ({ ...prev, [entity.name]: { ...entity } }));
+  }, []);
+  const selectEntity = React.useCallback((entity) => {
+    setSelectedEntities((prev) => [...prev, entity]);
+  }, []);
   const onTabChange = React.useCallback((tab) => {
     Persister.setTab(tab);
     setAppState(AppState.WAITING_FOR_ENTITIES);
@@ -54,7 +65,7 @@ function App() {
 
   const KEY_HANDLERS = React.useMemo(() => {
     return {
-      "remove-entity": () => {
+      [Action.REMOVE_ENTITY]: () => {
         if (selectedEntities.length === 1) {
           removeEntity(selectedEntities[0]);
         }
@@ -64,6 +75,7 @@ function App() {
 
   useEffect(() => {
     if (appState === AppState.READY) Persister.save("entities", entities);
+    // no app state in deps because we don't want to duplicate the save
   }, [entities]);
 
   useEffect(() => {
@@ -94,48 +106,46 @@ function App() {
 
   return (
     <GlobalHotKeys keyMap={KEY_MAP} handlers={KEY_HANDLERS} allowChanges>
-      <div className="app" style={{ width: "100vw", height: "100vh" }}>
-        <header style={{ height: "50px", backgroundColor: "grey" }}>
-          <button
-            onClick={() => {
-              Persister.remove("entities");
+      <EntitiesContext.Provider
+        value={{
+          entities,
+          addEntity,
+          editEntity,
+          removeEntity,
+          selectedEntities,
+          selectEntity,
+        }}
+      >
+        <div className="app" style={{ width: "100vw", height: "100vh" }}>
+          <header style={{ height: "50px", backgroundColor: "grey" }}>
+            <button
+              onClick={() => {
+                Persister.remove("entities");
+              }}
+            >
+              Clear
+            </button>
+            <Tabs onTabChange={onTabChange} />
+          </header>
+
+          <div
+            style={{
+              width: "100%",
+              height: "calc(100% - 50px)",
+              display: "grid",
+              gridTemplateColumns: "auto 300px",
             }}
           >
-            Clear
-          </button>
-          <Tabs onTabChange={onTabChange} />
-        </header>
+            {appState === AppState.READY ? (
+              <FlowChart entities={entities} setEntities={setEntities} />
+            ) : (
+              <div>Loading...</div>
+            )}
 
-        <div
-          style={{
-            width: "100%",
-            height: "calc(100% - 50px)",
-            display: "grid",
-            gridTemplateColumns: "auto 300px",
-          }}
-        >
-          {appState === AppState.READY ? (
-            <FlowChart
-              entities={entities}
-              setEntities={setEntities}
-              setSelectedEntities={setSelectedEntities}
-            />
-          ) : (
-            <div>Loading...</div>
-          )}
-
-          <SidePanel
-            entities={entities}
-            selectedEntities={selectedEntities}
-            addEntity={addEntity}
-            editEntity={(entity) => {
-              console.log("editEntity", entity);
-              setEntities({ ...entities, [entity.name]: { ...entity } });
-            }}
-            removeEntity={removeEntity}
-          />
+            <SidePanel />
+          </div>
         </div>
-      </div>
+      </EntitiesContext.Provider>
     </GlobalHotKeys>
   );
 }
