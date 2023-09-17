@@ -14,7 +14,7 @@ const getEntityStyleBasedOnType = (entity: BaseEntity) => {
   };
 };
 
-const EntityComponent = ({ data, position }: EntityNode) => {
+const EntityComponent = ({ data }: EntityNode) => {
   const { entity = {} as any } = data || {};
   const { name, type } = entity;
   return (

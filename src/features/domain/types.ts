@@ -122,8 +122,8 @@ export type Object = BaseContainer & {
 // -----------------------------------------------------------------------------
 
 // the most abstract types, should encompass all of the above types
-export type Value = ReactiveValue | RegularValue;
 export type ReactiveValue = ComputedValue | ObservableValue;
+export type Value = ReactiveValue | RegularValue;
 export type Subscribable = Subject | Socket;
 export type Caller = Function | Reaction | Action;
 export type Setter = Function | Reaction | Action;

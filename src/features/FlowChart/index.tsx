@@ -16,15 +16,49 @@ enum FlowChartState {
   READY,
 }
 
+type EntityMap = Record<string, Entity>;
+type Entities = Entity[];
+
+const useEntitiesToNodesAndEdges = (entities: EntityMap) => {
+  useEffect(() => {
+    (async () => {
+      const positions = await Persister.load<
+        Record<string, { x: number; y: number }>
+      >("positions");
+
+      const newNodes = [] as any;
+      const newEdges = [] as any;
+
+      for (const value of Object.values(entities)) {
+        const mappedEntity = mappedEntities.find(
+          (el) => el.data?.entity === value
+        );
+        if (mappedEntity) {
+          // update only edges
+          newNodes.push(mappedEntity);
+          newEdges.push(...mapEntityToElements(value, positions, true));
+        } else {
+          newMappedEntities.push(...mapEntityToElements(value, positions));
+        }
+      }
+
+      setFlowChartState(FlowChartState.READY);
+      setMappedEntities(newMappedEntities);
+    })();
+  }, [entities]);
+};
+
 const FlowChart = ({
   entities,
   setEntities,
   setSelectedEntities,
 }: {
-  entities: Record<string, Entity>;
-  setEntities: (entities: Record<string, Entity>) => void;
-  setSelectedEntities: (entities: Entity[]) => void;
+  entities: EntityMap;
+  setEntities: (entities: EntityMap) => void;
+  setSelectedEntities: (entities: Entities) => void;
 }) => {
+  console.log("FlowChart", entities);
+
   const [flowChartState, setFlowChartState] = React.useState<FlowChartState>(
     FlowChartState.WAITING_FOR_POSITIONS
   );
@@ -47,11 +81,11 @@ const FlowChart = ({
     [setEntities]
   );
   const onSelectionChangeWrapped = React.useCallback(
-    (nodes) => {
-      setSelectedEntities(
-        nodes?.map((node: EntityNode) => node.data?.entity).filter(Boolean) ||
-          []
-      );
+    (nodes: any) => {
+      // setSelectedEntities(
+      //   nodes?.map((node: EntityNode) => node.data?.entity).filter(Boolean) ||
+      //     []
+      // );
     },
     [setSelectedEntities]
   );
@@ -78,45 +112,21 @@ const FlowChart = ({
       })();
     // save to local storage - end
   }, [mappedEntities]);
-  useEffect(() => {
-    (async () => {
-      const positions = await Persister.load<
-        Record<string, { x: number; y: number }>
-      >("positions");
-      console.log("NEW ENTITIES", entities);
-
-      const newMappedEntities = [] as any;
-
-      for (const value of Object.values(entities)) {
-        const mappedEntity = mappedEntities.find(
-          (el) => el.data?.entity === value
-        );
-        if (mappedEntity) {
-          newMappedEntities.push(mappedEntity);
-          newMappedEntities.push(
-            ...mapEntityToElements(value, positions, true)
-          );
-        } else {
-          newMappedEntities.push(...mapEntityToElements(value, positions));
-        }
-      }
-
-      setFlowChartState(FlowChartState.READY);
-      setMappedEntities(newMappedEntities);
-    })();
-  }, [entities]);
 
   return (
     <ReactFlowProvider>
       <ReactFlow
         minZoom={0}
-        nodeTypes={{
-          entity: EntityNodeComponent,
-        }}
+        nodeTypes={
+          {
+            // entity: EntityNodeComponent,
+          }
+        }
         onConnect={onConnectPA}
         onNodeDragStop={onNodeDragStopWrapped}
-        elements={mappedEntities}
         onSelectionChange={onSelectionChangeWrapped}
+        nodes={[]}
+        edges={[]}
       />
     </ReactFlowProvider>
   );

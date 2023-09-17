@@ -1,5 +1,3 @@
-const TAB_ERROR = new Error("Tab not found");
-
 export class Persister {
   private tab: string | null = null;
 
@@ -46,4 +44,6 @@ export class Persister {
   }
 }
 
-export default new Persister();
+const globalPersister = new Persister();
+
+export default globalPersister;
